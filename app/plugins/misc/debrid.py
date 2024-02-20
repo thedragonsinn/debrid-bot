@@ -1,7 +1,6 @@
 # AllDebrid API plugin By Ryuk
 
 import os
-from urllib.parse import urljoin
 
 from app import BOT, Message, bot
 from app.utils.aiohttp_tools import aio
@@ -15,7 +14,7 @@ KEY = os.environ.get("DEBRID_TOKEN")
 async def get_json(endpoint: str, query: dict) -> dict | str:
     if not KEY:
         return "API key not found."
-    api_url = urljoin("https://api.alldebrid.com/v4", endpoint)
+    api_url = os.path.join("https://api.alldebrid.com/v4", endpoint)
     params = {"agent": "bot", "apikey": KEY, **query}
     async with aio.session.get(url=api_url, params=params) as ses:
         try:
@@ -48,13 +47,13 @@ async def debrid(bot: BOT, message: Message):
 def get_request_params(query: str, flags: list) -> tuple[str, dict]:
     if query.startswith("http"):
         if "-save" not in flags:
-            endpoint = "/link/unlock"
+            endpoint = "link/unlock"
             query = {"link": query}
         else:
-            endpoint = "/user/links/save"
+            endpoint = "user/links/save"
             query = {"links[]": query}
     else:
-        endpoint = "/magnet/upload"
+        endpoint = "magnet/upload"
         query = {"magnets[]": query}
     return endpoint, query
 
@@ -80,7 +79,7 @@ def format_data(unrestricted_data: dict) -> str:
 # Get Status via id or Last 5 torrents
 @bot.add_cmd("torrents")
 async def torrents(bot: BOT, message: Message):
-    endpoint = "/magnet/status"
+    endpoint = "magnet/status"
     query = {}
 
     if "-l" not in message.flags and message.flt_input:
@@ -138,7 +137,7 @@ def parse_uptobox_links(data: list) -> str:
 # Delete a Magnet
 @bot.add_cmd("del_t")
 async def delete_torrent(bot: BOT, message: Message):
-    endpoint = "/magnet/delete"
+    endpoint = "magnet/delete"
     if not message.flt_input:
         await message.reply("Enter an ID to delete")
         return
