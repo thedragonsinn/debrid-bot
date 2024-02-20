@@ -1,6 +1,7 @@
 # AllDebrid API plugin By Ryuk
 
 import os
+from urllib.parse import urljoin
 
 from app import BOT, Message, bot
 from app.utils.aiohttp_tools import aio
@@ -14,7 +15,7 @@ KEY = os.environ.get("DEBRID_TOKEN")
 async def get_json(endpoint: str, query: dict) -> dict | str:
     if not KEY:
         return "API key not found."
-    api_url = os.path.join("https://api.alldebrid.com/v4", endpoint)
+    api_url = urljoin("https://api.alldebrid.com/v4", endpoint)
     params = {"agent": "bot", "apikey": KEY, **query}
     async with aio.session.get(url=api_url, params=params) as ses:
         try:
