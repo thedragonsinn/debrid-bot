@@ -122,13 +122,14 @@ async def torrents(bot: BOT, message: Message):
         await message.reply(text=graph_url, disable_web_page_preview=True)
 
 
-def parse_uptobox_links(data: list) -> str:
-    if not data:
+def parse_uptobox_links(data: dict) -> str:
+    links = data.get("links")
+    if not links:
         return ""
     links = "\n".join(
         [
             f"<a href='{info.get('link', '')}'>{info.get('filename', '')}</a>"
-            for info in data
+            for info in links
         ]
     )
     return f"<i>UptoBox</i>: \n[ {links} ]"
