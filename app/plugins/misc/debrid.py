@@ -108,17 +108,19 @@ async def torrents(bot: BOT, message: Message):
     for data in torrent_list[0:limit]:
         status = data.get("status")
         name = data.get("filename")
+        url = os.path.join(INDEX, quote(name.strip("/")))
+        href_name = f"<a href='{url}'>{name}</a>"
         id = data.get("id")
         downloaded = ""
         if status == "Downloading":
             downloaded = f'<i>{bytes_to_mb(data.get("downloaded",0))}</i>/'
         size = f'{downloaded}<i>{bytes_to_mb(data.get("size",0))}</i> mb'
         ret_str += (
-            f"\n<b>Name</b>: <i>{name}</i>"
+            f"\n\n<b>Name</b>: <i>{href_name}</i>"
             f"\nStatus: <i>{status}</i>"
             f"\nID: <code>{id}</code>"
             f"\nSize: {size}"
-            f"\n{parse_uptobox_links(data)}"
+            f"\n{parse_debrid_links(data)}"
         )
     if len(ret_str) < 4000:
         await message.reply(ret_str, disable_web_page_preview=True)
@@ -128,7 +130,7 @@ async def torrents(bot: BOT, message: Message):
         await message.reply(text=graph_url, disable_web_page_preview=True)
 
 
-def parse_uptobox_links(data: dict) -> str:
+def parse_debrid_links(data: dict) -> str:
     links = data.get("links")
     if not links:
         return ""
@@ -138,7 +140,7 @@ def parse_uptobox_links(data: dict) -> str:
             for info in links
         ]
     )
-    return f"<i>UptoBox</i>: \n[ {links} ]"
+    return f"<i>AllDebrid</i>: \n[ {links} ]"
 
 
 # Delete a Magnet
