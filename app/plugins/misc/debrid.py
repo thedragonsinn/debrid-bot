@@ -1,6 +1,7 @@
 # AllDebrid API plugin By Ryuk
 
 import os
+from urllib.parse import quote_plus
 
 from app import BOT, Message, bot
 from app.utils.aiohttp_tools import aio
@@ -8,6 +9,7 @@ from app.utils.helpers import bytes_to_mb
 from app.utils.helpers import post_to_telegraph as post_tgh
 
 KEY = os.environ.get("DEBRID_TOKEN")
+INDEX = os.environ.get("INDEX", "")
 
 
 # Get response from api and return json or the error
@@ -61,17 +63,21 @@ def get_request_params(query: str, flags: list) -> tuple[str, dict]:
 def format_data(unrestricted_data: dict) -> str:
     try:
         data = unrestricted_data["data"]["magnets"][0]
-    except (ValueError, KeyError):
+    except (IndexError, ValueError, KeyError):
         data = unrestricted_data["data"]
+
     name = data.get("filename") or data.get("name", "")
+    os.path.join(INDEX, quote_plus(name.strip("/")))
+    href_name = "<a href='{url}'>{name}</a>"
     id = data.get("id")
     size = bytes_to_mb(data.get("size") or data.get("filesize", 0))
     ready = data.get("ready", "True")
+
     formatted_data = (
-        f"Name: **{name}**"
-        f"\nID: `{id}`"
-        f"\nSize: **{size} mb**"
-        f"\nReady: __{ready}__"
+        f"Name: {href_name}"
+        f"\nID: <code>{id}</code>"
+        f"\nSize: <b>{size}mb</b>"
+        f"\nReady: <i>{ready}</i>"
     )
     return formatted_data
 

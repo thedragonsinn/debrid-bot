@@ -10,16 +10,17 @@ from pyrogram.types import Message as Msg
 from app.core.types.message import Message
 from app.utils import Str
 from app.utils.helpers import progress
-from app.utils.media_helper import (
-    bytes_to_mb,
-    get_filename_from_headers,
-    get_filename_from_url,
-    get_type,
-)
+from app.utils.media_helper import (bytes_to_mb, get_filename_from_headers,
+                                    get_filename_from_url, get_type)
 
 
 class DownloadedFile(Str):
-    def __init__(self, name: str, path: str, full_path: str, size: int | float):
+    def __init__(
+            self,
+            name: str,
+            path: str,
+            full_path: str,
+            size: int | float):
         self.name = name
         self.path = path
         self.full_path = full_path
@@ -124,9 +125,9 @@ class Download(Str):
     def file_name(self):
         if self.custom_file_name:
             return self.custom_file_name
-        return get_filename_from_headers(self.headers) or get_filename_from_url(
-            self.url
-        )
+        return get_filename_from_headers(
+            self.headers) or get_filename_from_url(
+            self.url)
 
     @cached_property
     def full_path(self):

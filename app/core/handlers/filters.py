@@ -16,9 +16,11 @@ def cmd_check(message: Message, trigger: str, sudo: bool = False) -> bool:
     cmd_obj = Config.CMD_DICT.get(cmd)
     if not cmd_obj:
         return False
-    in_sudo = cmd in Config.SUDO_CMD_LIST
-    has_access = Config.CMD_DICT[cmd].sudo
-    return in_sudo and has_access
+    if sudo:
+        in_sudo = cmd in Config.SUDO_CMD_LIST
+        has_access = Config.CMD_DICT[cmd].sudo
+        return in_sudo and has_access
+    return True
 
 
 def basic_check(message: Message):
