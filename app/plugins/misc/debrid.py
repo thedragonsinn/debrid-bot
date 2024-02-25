@@ -67,7 +67,7 @@ def format_data(unrestricted_data: dict) -> str:
         data = unrestricted_data["data"]
 
     name = data.get("filename") or data.get("name", "")
-    os.path.join(INDEX, quote_plus(name.strip("/")))
+    url = os.path.join(INDEX, quote_plus(name.strip("/")))
     href_name = f"<a href='{url}'>{name}</a>"
     id = data.get("id")
     size = bytes_to_mb(data.get("size") or data.get("filesize", 0))
