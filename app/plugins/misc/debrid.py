@@ -1,7 +1,7 @@
 # AllDebrid API plugin By Ryuk
 
 import os
-from urllib.parse import quote_plus
+from urllib.parse import quote
 
 from app import BOT, Message, bot
 from app.utils.aiohttp_tools import aio
@@ -67,7 +67,7 @@ def format_data(unrestricted_data: dict) -> str:
         data = unrestricted_data["data"]
 
     name = data.get("filename") or data.get("name", "")
-    url = os.path.join(INDEX, quote_plus(name.strip("/")))
+    url = os.path.join(INDEX, quote(name.strip("/")))
     href_name = f"<a href='{url}'>{name}</a>"
     id = data.get("id")
     size = bytes_to_mb(data.get("size") or data.get("filesize", 0))
