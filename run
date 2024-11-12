@@ -1,7 +1,10 @@
-#!/bin/sh
+#!/usr/bin/env bash
 
 if ! [ -d ".git" ] ; then
     git init 
 fi
 
-python3 -m app
+while true; do
+  python3 debrid.py
+  [ $? -ne 69 ] && break
+done

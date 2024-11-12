@@ -1,15 +1,36 @@
 # AllDebrid API plugin By Ryuk
+# Made to be used standalone by Meliodas.
+# Github: @TheDragonSinn
 
 import os
-from urllib.parse import quote
+from urllib.parse import quote_plus
 
-from app import BOT, Message, bot
-from app.utils.aiohttp_tools import aio
-from app.utils.helpers import bytes_to_mb
-from app.utils.helpers import post_to_telegraph as post_tgh
+from ub_core import BOT, Config, CustomDB, Message
+from ub_core.utils import aio, bytes_to_mb
+from ub_core.utils import post_to_telegraph as post_tgh
 
 KEY = os.environ.get("DEBRID_TOKEN")
 INDEX = os.environ.get("INDEX", "")
+
+
+async def init_task():
+    Config.SUDO_CMD_LIST = [
+        sudo_cmd["_id"] async for sudo_cmd in CustomDB("SUDO_CMD_LIST").find()
+    ]
+
+    sudo = await CustomDB("COMMON_SETTINGS").find_one({"_id": "sudo_switch"}) or {}
+
+    Config.SUDO = sudo.get("value", False)
+
+    async for sudo_user in CustomDB("SUDO_USERS").find():
+        config = Config.SUPERUSERS if sudo_user.get("super") else Config.SUDO_USERS
+        config.append(sudo_user["_id"])
+
+        if sudo_user.get("disabled"):
+            Config.DISABLED_SUPERUSERS.append(sudo_user["_id"])
+
+
+Config.INIT_TASKS.append(init_task())
 
 
 # Get response from api and return json or the error
@@ -27,20 +48,25 @@ async def get_json(endpoint: str, query: dict) -> dict | str:
 
 
 # Unlock Links or magnets
-@bot.add_cmd("unrestrict")
+@BOT.add_cmd("u")
 async def debrid(bot: BOT, message: Message):
-    if not message.flt_input:
+    if not message.filtered_input:
         await message.reply("Give a magnet or link to unrestrict.")
         return
+
     for data in message.text_list[1:]:
         endpoint, query = get_request_params(data, message.flags)
+
         unrestricted_data = await get_json(endpoint=endpoint, query=query)
+
         if not isinstance(unrestricted_data, dict) or "error" in unrestricted_data:
             await message.reply(unrestricted_data)
             continue
+
         if "-save" in message.flags:
             await message.reply("Link Successfully Saved.")
             continue
+
         await message.reply(
             text=format_data(unrestricted_data), disable_web_page_preview=True
         )
@@ -48,15 +74,18 @@ async def debrid(bot: BOT, message: Message):
 
 def get_request_params(query: str, flags: list) -> tuple[str, dict]:
     if query.startswith("http"):
+
         if "-save" not in flags:
             endpoint = "link/unlock"
             query = {"link": query}
         else:
             endpoint = "user/links/save"
             query = {"links[]": query}
+
     else:
         endpoint = "magnet/upload"
         query = {"magnets[]": query}
+
     return endpoint, query
 
 
@@ -67,7 +96,7 @@ def format_data(unrestricted_data: dict) -> str:
         data = unrestricted_data["data"]
 
     name = data.get("filename") or data.get("name", "")
-    url = os.path.join(INDEX, quote(name.strip("/")))
+    url = os.path.join(INDEX, quote_plus(name.strip("/")))
     href_name = f"<a href='{url}'>{name}</a>"
     id = data.get("id")
     size = bytes_to_mb(data.get("size") or data.get("filesize", 0))
@@ -82,14 +111,14 @@ def format_data(unrestricted_data: dict) -> str:
     return formatted_data
 
 
-# Get Status via id or Last 5 torrents
-@bot.add_cmd("torrents")
+# Get Status via id or Last torrents
+@BOT.add_cmd("t")
 async def torrents(bot: BOT, message: Message):
     endpoint = "magnet/status"
     query = {}
 
-    if "-l" not in message.flags and message.flt_input:
-        query = {"id": message.flt_input}
+    if "-l" not in message.flags and message.filtered_input:
+        query = {"id": message.filtered_input}
 
     torrent_data = await get_json(endpoint=endpoint, query=query)
 
@@ -103,12 +132,12 @@ async def torrents(bot: BOT, message: Message):
         torrent_list = [torrent_list]
 
     ret_str = ""
-    limit = int(message.flt_input) if "-l" in message.flags else 1
+    limit = int(message.filtered_input) if "-l" in message.flags else 1
 
     for data in torrent_list[0:limit]:
         status = data.get("status")
         name = data.get("filename")
-        url = os.path.join(INDEX, quote(name.strip("/")))
+        url = os.path.join(INDEX, quote_plus(name.strip("/"), safe="/?&=.-_~"))
         href_name = f"<a href='{url}'>{name}</a>"
         id = data.get("id")
         downloaded = ""
@@ -144,12 +173,19 @@ def parse_debrid_links(data: dict) -> str:
 
 
 # Delete a Magnet
-@bot.add_cmd("del_t")
+@BOT.add_cmd("dt")
 async def delete_torrent(bot: BOT, message: Message):
     endpoint = "magnet/delete"
-    if not message.flt_input:
+    if not message.filtered_input:
         await message.reply("Enter an ID to delete")
         return
+
     for id in message.text_list[1:]:
         json = await get_json(endpoint=endpoint, query={"id": id})
         await message.reply(str(json))
+
+
+if __name__ == "__main__":
+    from ub_core import bot
+
+    bot.run(bot.boot())
