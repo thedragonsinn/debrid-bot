@@ -202,10 +202,13 @@ async def unrestrict_torrent_files(bot: BOT, message: Message):
     torrent_file.seek(0)
 
     post_url: str = "https://api.alldebrid.com/v4/magnet/upload/file"
-    data: dict = {"agent": "bot", "apikey": KEY, "files[]": torrent_file}
+    params: dict = {"agent": "bot", "apikey": KEY}
+    data: dict = {"files[]": torrent_file}
 
     try:
-        async with aio.session.post(url=post_url, data=data) as post_response:
+        async with aio.session.post(
+            url=post_url, data=data, params=params
+        ) as post_response:
             response_json = await post_response.json()
     except Exception as e:
         await message.reply(e)
