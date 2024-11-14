@@ -35,6 +35,19 @@ async def init_task():
 Config.INIT_TASKS.append(init_task())
 
 
+@BOT.add_cmd("dhelp")
+async def show_commands(bot: BOT, message: Message):
+    await message.reply(
+        """
+    CMD: U (Unrestrict magnets/links)
+    CMD: UT (Unrestrict Torrent)
+    CMD: T (Show Torrents)
+    CMD: DT (Delete Torrents)
+    INFO: Use debrid bot
+    """
+    )
+
+
 # Get response from api and return json or the error
 async def get_json(endpoint: str, query: dict) -> dict | str:
     if not KEY:
