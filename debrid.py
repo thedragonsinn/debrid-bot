@@ -12,6 +12,7 @@ from ub_core.utils import post_to_telegraph as post_tgh
 
 KEY = os.environ.get("DEBRID_TOKEN")
 INDEX = os.environ.get("INDEX", "")
+ALLOW_ALLDEBRID_LINKS = int(os.environ.get("ALLOW_ALLDEBRID_LINKS", 0))
 
 
 async def init_task():
@@ -51,6 +52,13 @@ async def get_json(endpoint: str, query: dict) -> dict | str:
 # Unlock Links or magnets
 @BOT.add_cmd("u")
 async def unrestrict_magnets(bot: BOT, message: Message):
+    """
+    CMD: U (Unrestrict)
+    INFO: Unrestrict one or more links/magnets
+    FLAGS:
+        -save: to save links
+    USAGE: .u <magnet> | .u magnet1 magnet2 link
+    """
     if not message.filtered_input:
         await message.reply("Give a magnet or link to unrestrict.")
         return
@@ -118,6 +126,13 @@ def format_data(unrestricted_data: dict, sliced: bool = False) -> str:
 # Get Status via id or Last torrents
 @BOT.add_cmd("t")
 async def get_torrent_info(bot: BOT, message: Message):
+    """
+    CMD: T (List Torrents)
+    INFO: Get torrents information for.
+    FLAGS:
+        -l: to limit number of results, defaults to 1
+    USAGE:  .t | .t -l 5
+    """
     endpoint = "magnet/status"
     query = {}
 
@@ -164,9 +179,14 @@ async def get_torrent_info(bot: BOT, message: Message):
 
 
 def parse_debrid_links(data: dict) -> str:
+    if not ALLOW_ALLDEBRID_LINKS:
+        return ""
+
     links = data.get("links")
+
     if not links:
         return ""
+
     links = "\n".join(
         [
             f"<a href='{info.get('link', '')}'>{info.get('filename', '')}</a>"
@@ -179,6 +199,11 @@ def parse_debrid_links(data: dict) -> str:
 # Delete a Magnet
 @BOT.add_cmd("dt")
 async def delete_torrent(bot: BOT, message: Message):
+    """
+    CMD: DT (Delete Torrent)
+    INFO: Delete one or more torrents using IDs.
+    USAGE: .dt <id> | .id <id1> <id2>
+    """
     endpoint = "magnet/delete"
     if not message.filtered_input:
         await message.reply("Enter an ID to delete")
@@ -191,6 +216,11 @@ async def delete_torrent(bot: BOT, message: Message):
 
 @BOT.add_cmd("ut")
 async def unrestrict_torrent_files(bot: BOT, message: Message):
+    """
+    CMD: UT (Unrestrict Torrent)
+    INFO: Unrestrict Torrent files
+    USAGE: .ut [reply to a torrent file]
+    """
     try:
         assert message.replied.document.file_name.endswith(".torrent")
     except (AssertionError, AttributeError):
