@@ -57,7 +57,7 @@ async def unrestrict_magnets(bot: BOT, message: Message):
     INFO: Unrestrict one or more links/magnets
     FLAGS:
         -save: to save links
-    USAGE: .u <magnet> | .u magnet1 magnet2 link
+    USAGE: .u magnet | .u magnet1 magnet2 link
     """
     if not message.filtered_input:
         await message.reply("Give a magnet or link to unrestrict.")
@@ -202,7 +202,7 @@ async def delete_torrent(bot: BOT, message: Message):
     """
     CMD: DT (Delete Torrent)
     INFO: Delete one or more torrents using IDs.
-    USAGE: .dt <id> | .id <id1> <id2>
+    USAGE: .dt id | .id id1 id2
     """
     endpoint = "magnet/delete"
     if not message.filtered_input:
