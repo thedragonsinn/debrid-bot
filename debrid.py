@@ -3,6 +3,7 @@
 # Github: @TheDragonSinn
 
 import os
+from io import BytesIO
 from urllib.parse import quote_plus
 
 from ub_core import BOT, Config, CustomDB, Message
@@ -49,7 +50,7 @@ async def get_json(endpoint: str, query: dict) -> dict | str:
 
 # Unlock Links or magnets
 @BOT.add_cmd("u")
-async def debrid(bot: BOT, message: Message):
+async def unrestrict_magnets(bot: BOT, message: Message):
     if not message.filtered_input:
         await message.reply("Give a magnet or link to unrestrict.")
         return
@@ -89,14 +90,17 @@ def get_request_params(query: str, flags: list) -> tuple[str, dict]:
     return endpoint, query
 
 
-def format_data(unrestricted_data: dict) -> str:
-    try:
-        data = unrestricted_data["data"]["magnets"][0]
-    except (IndexError, ValueError, KeyError):
-        data = unrestricted_data["data"]
+def format_data(unrestricted_data: dict, sliced: bool = False) -> str:
+    if not sliced:
+        try:
+            data = unrestricted_data["data"]["magnets"][0]
+        except (IndexError, ValueError, KeyError):
+            data = unrestricted_data["data"]
+    else:
+        data = unrestricted_data
 
     name = data.get("filename") or data.get("name", "")
-    url = os.path.join(INDEX, quote_plus(name.strip("/")))
+    url = os.path.join(INDEX, quote_plus(name.strip("/"), safe="/?&=.-_~"))
     href_name = f"<a href='{url}'>{name}</a>"
     id = data.get("id")
     size = bytes_to_mb(data.get("size") or data.get("filesize", 0))
@@ -113,7 +117,7 @@ def format_data(unrestricted_data: dict) -> str:
 
 # Get Status via id or Last torrents
 @BOT.add_cmd("t")
-async def torrents(bot: BOT, message: Message):
+async def get_torrent_info(bot: BOT, message: Message):
     endpoint = "magnet/status"
     query = {}
 
@@ -183,6 +187,38 @@ async def delete_torrent(bot: BOT, message: Message):
     for id in message.text_list[1:]:
         json = await get_json(endpoint=endpoint, query={"id": id})
         await message.reply(str(json))
+
+
+@BOT.add_cmd("ut")
+async def unrestrict_torrent_files(bot: BOT, message: Message):
+    try:
+        assert message.replied.document.file_name.endswith(".torrent")
+    except (AssertionError, AttributeError):
+        await message.reply("Reply to a torrent file.")
+        return
+
+    # noinspection PyTypeChecker
+    torrent_file: BytesIO = await message.replied.download(in_memory=True)
+    torrent_file.seek(0)
+
+    post_url: str = "https://api.alldebrid.com/v4/magnet/upload/file"
+    data: dict = {"agent": "bot", "apikey": KEY, "files[]": torrent_file}
+
+    try:
+        async with aio.session.post(url=post_url, data=data) as post_response:
+            response_json = await post_response.json()
+    except Exception as e:
+        await message.reply(e)
+        return
+
+    if "error" in response_json:
+        await message.reply(response_json)
+        return
+
+    await message.reply(
+        format_data(response_json["data"]["files"][0], sliced=True),
+        disable_web_page_preview=True,
+    )
 
 
 if __name__ == "__main__":
