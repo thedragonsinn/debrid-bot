@@ -39,11 +39,10 @@ Config.INIT_TASKS.append(init_task())
 async def show_commands(bot: BOT, message: Message):
     await message.reply(
         """
-    CMD: U (Unrestrict magnets/links)
-    CMD: UT (Unrestrict Torrent)
-    CMD: T (Show Torrents)
-    CMD: DT (Delete Torrents)
-    INFO: Use debrid bot
+CMD: U (Unrestrict magnets/links)
+CMD: UT (Unrestrict Torrent)
+CMD: T (Show Torrents)
+CMD: DT (Delete Torrents)
     """
     )
 
