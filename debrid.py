@@ -89,7 +89,7 @@ async def unrestrict_magnets(bot: BOT, message: Message):
             continue
 
         await message.reply(
-            text=format_data(unrestricted_data), disable_web_page_preview=True
+            text=format_data(unrestricted_data), disable_preview=True
         )
 
 
@@ -183,11 +183,11 @@ async def get_torrent_info(bot: BOT, message: Message):
             f"\n{parse_debrid_links(data)}"
         )
     if len(ret_str) < 4000:
-        await message.reply(ret_str, disable_web_page_preview=True)
+        await message.reply(ret_str, disable_preview=True)
     else:
         escaped_html = ret_str.replace("\n", "<br>")
         graph_url = await post_tgh(title="Magnets", text=escaped_html)
-        await message.reply(text=graph_url, disable_web_page_preview=True)
+        await message.reply(text=graph_url, disable_preview=True)
 
 
 def parse_debrid_links(data: dict) -> str:
@@ -262,7 +262,7 @@ async def unrestrict_torrent_files(bot: BOT, message: Message):
 
     await message.reply(
         format_data(response_json["data"]["files"][0], sliced=True),
-        disable_web_page_preview=True,
+        disable_preview=True,
     )
 
 
