@@ -18,13 +18,13 @@ ALLOW_ALLDEBRID_LINKS = int(os.environ.get("ALLOW_ALLDEBRID_LINKS", 0))
 
 
 async def init_task():
-    Config.SUDO_CMD_LIST = [sudo_cmd["_id"] async for sudo_cmd in CustomDB("SUDO_CMD_LIST").find()]
+    Config.SUDO_CMD_LIST = [sudo_cmd["_id"] async for sudo_cmd in CustomDB["SUDO_CMD_LIST"].find()]
 
-    sudo = await CustomDB("COMMON_SETTINGS").find_one({"_id": "sudo_switch"}) or {}
+    sudo = await CustomDB["COMMON_SETTINGS"].find_one({"_id": "sudo_switch"}) or {}
 
     Config.SUDO = sudo.get("value", False)
 
-    async for sudo_user in CustomDB("SUDO_USERS").find():
+    async for sudo_user in CustomDB["SUDO_USERS"].find():
         config = Config.SUPERUSERS if sudo_user.get("super") else Config.SUDO_USERS
         config.append(sudo_user["_id"])
 
@@ -184,7 +184,7 @@ async def get_torrent_info(bot: BOT, message: Message):
 
     if isinstance(torrent_list, str):
         await message.reply(torrent_list)
-        return 
+        return
 
     ret_str = ""
 
