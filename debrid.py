@@ -80,6 +80,66 @@ def get_request_params(query: str, flags: list) -> tuple[str, dict]:
     return endpoint, query
 
 
+async def fetch_torrents(message: Message) -> str | list[dict]:
+    endpoint = "magnet/status"
+    query = {}
+
+    if "-l" not in message.flags and message.filtered_input:
+        query = {"id": message.filtered_input}
+
+    torrent_data = await get_json(endpoint=endpoint, query=query)
+
+    if not isinstance(torrent_data, dict) or "error" in torrent_data:
+        return str(torrent_data)
+
+    torrent_list = torrent_data["data"]["magnets"]
+
+    if not isinstance(torrent_list, list):
+        torrent_list = [torrent_list]
+
+    return torrent_list
+
+
+def parse_debrid_links(data: dict) -> str:
+    if not ALLOW_ALLDEBRID_LINKS:
+        return ""
+
+    links = data.get("links")
+
+    if not links:
+        return ""
+
+    links = "\n".join(
+        [f"<a href='{info.get('link', '')}'>{info.get('filename', '')}</a>" for info in links]
+    )
+    return f"<i>AllDebrid</i>: \n[ {links} ]"
+
+
+def format_data(unrestricted_data: dict, sliced: bool = False) -> str:
+    if not sliced:
+        try:
+            data = unrestricted_data["data"]["magnets"][0]
+        except (IndexError, ValueError, KeyError):
+            data = unrestricted_data["data"]
+    else:
+        data = unrestricted_data
+
+    name = data.get("filename") or data.get("name", "")
+    url = os.path.join(INDEX, quote_plus(name.strip("/"), safe="/?&=.-_~"))
+    href_name = f"<a href='{url}'>{name}</a>"
+    id = data.get("id")
+    size = bytes_to_mb(data.get("size") or data.get("filesize", 0))
+    ready = data.get("ready", "True")
+
+    formatted_data = (
+        f"Name: {href_name}"
+        f"\nID: <code>{id}</code>"
+        f"\nSize: <b>{size}mb</b>"
+        f"\nReady: <i>{ready}</i>"
+    )
+    return formatted_data
+
+
 # Unlock Links or magnets
 @BOT.add_cmd("u")
 async def unrestrict_magnets(bot: BOT, message: Message):
@@ -108,51 +168,6 @@ async def unrestrict_magnets(bot: BOT, message: Message):
             continue
 
         await message.reply(text=format_data(unrestricted_data), disable_preview=True)
-
-
-def format_data(unrestricted_data: dict, sliced: bool = False) -> str:
-    if not sliced:
-        try:
-            data = unrestricted_data["data"]["magnets"][0]
-        except (IndexError, ValueError, KeyError):
-            data = unrestricted_data["data"]
-    else:
-        data = unrestricted_data
-
-    name = data.get("filename") or data.get("name", "")
-    url = os.path.join(INDEX, quote_plus(name.strip("/"), safe="/?&=.-_~"))
-    href_name = f"<a href='{url}'>{name}</a>"
-    id = data.get("id")
-    size = bytes_to_mb(data.get("size") or data.get("filesize", 0))
-    ready = data.get("ready", "True")
-
-    formatted_data = (
-        f"Name: {href_name}"
-        f"\nID: <code>{id}</code>"
-        f"\nSize: <b>{size}mb</b>"
-        f"\nReady: <i>{ready}</i>"
-    )
-    return formatted_data
-
-
-async def fetch_torrents(message: Message) -> str | list[dict]:
-    endpoint = "magnet/status"
-    query = {}
-
-    if "-l" not in message.flags and message.filtered_input:
-        query = {"id": message.filtered_input}
-
-    torrent_data = await get_json(endpoint=endpoint, query=query)
-
-    if not isinstance(torrent_data, dict) or "error" in torrent_data:
-        return str(torrent_data)
-
-    torrent_list = torrent_data["data"]["magnets"]
-
-    if not isinstance(torrent_list, list):
-        torrent_list = [torrent_list]
-
-    return torrent_list
 
 
 # Get Status via id or Last torrents
@@ -209,10 +224,20 @@ async def get_torrent_info(bot: BOT, message: Message):
 
 @BOT.add_cmd("r")
 async def restart_debrid(bot: BOT, message: Message):
+    """
+    CMD: R (Restart Expired Torrents)
+    FLAGS:
+        -l: to limit number of results to look for defaults to all.
+    USAGE:
+        .r (will check for expired torrents across all)
+        .r -l 5 (look for expired in first 5 torrents)
+        .r <id> (restart a specific torrent)
+    """
     torrent_list: list[dict] = await fetch_torrents(message)
 
     if isinstance(torrent_list, str):
         await message.reply(torrent_list)
+        return
 
     ret_str = ""
 
@@ -231,21 +256,6 @@ async def restart_debrid(bot: BOT, message: Message):
         await message.reply(f"```\n{ret_str}```")
     else:
         await message.reply("No torrents to retry.", del_in=5)
-
-
-def parse_debrid_links(data: dict) -> str:
-    if not ALLOW_ALLDEBRID_LINKS:
-        return ""
-
-    links = data.get("links")
-
-    if not links:
-        return ""
-
-    links = "\n".join(
-        [f"<a href='{info.get('link', '')}'>{info.get('filename', '')}</a>" for info in links]
-    )
-    return f"<i>AllDebrid</i>: \n[ {links} ]"
 
 
 # Delete a Magnet
