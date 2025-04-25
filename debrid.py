@@ -234,6 +234,7 @@ async def restart_debrid(bot: BOT, message: Message):
         .r -l 5 (look for expired in first 5 torrents)
         .r <id> (restart a specific torrent)
     """
+    endpoint = "magnet/restart"
     torrent_list: list[dict] = await fetch_torrents(message)
 
     if isinstance(torrent_list, str):
