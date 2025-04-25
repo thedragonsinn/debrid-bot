@@ -184,6 +184,7 @@ async def get_torrent_info(bot: BOT, message: Message):
 
     if isinstance(torrent_list, str):
         await message.reply(torrent_list)
+        return 
 
     ret_str = ""
 
