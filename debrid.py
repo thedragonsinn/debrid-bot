@@ -246,7 +246,7 @@ async def restart_debrid(bot: BOT, message: Message):
     for entry in torrent_list:
         if "expired" in entry.get("status", "").lower():
             json_data = await get_json(
-                endpoint=endpoint, query={"id": int(entry.get("id"))}, method="post"
+                endpoint=endpoint, query={"id": int(entry.get("id"))}, mode="post"
             )
 
             if isinstance(json_data, str):
