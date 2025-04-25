@@ -213,9 +213,9 @@ async def get_torrent_info(bot: BOT, message: Message):
 
     ret_str = f"<blockquote expandable=True>{ret_str.strip()}</blockquote>"
 
-    text, _ = await parse_text_entities(bot, ret_str, None, [])
+    text_and_entities = await parse_text_entities(bot, ret_str, None, [])
 
-    if len(text) < 4096:
+    if len(text_and_entities["message"]) < 4096:
         await message.reply(ret_str, disable_preview=True)
     else:
         escaped_html = ret_str.replace("\n", "<br>")
